@@ -1,0 +1,17 @@
+spring:
+  application:
+    name: emailservice
+  profiles:
+    active: ${ACTIVE_PROFILE:local}
+  config:
+    import: optional:configserver:${CONFIG_SERVER_URL:http://localhost:8888}
+  mail:
+    test-connection: true
+    properties:
+      mail.smtp.auth: true
+      mail.smtp.starttls.enable: true
+    protocol: smtp
+
+server:
+  port: ${SERVER_PORT:8010}
+

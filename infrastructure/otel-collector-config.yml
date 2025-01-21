@@ -1,0 +1,30 @@
+receivers:
+  otlp:
+    protocols:
+      grpc:
+        endpoint: ":4317"  # gRPC receiver for Java app
+      http:
+        endpoint: ":4318"  # HTTP receiver for Java app
+
+exporters:
+  otlp/tempo:
+    endpoint: tempo:4317  # Forwarding to Tempo's gRPC endpoint
+    tls:
+      insecure: true
+  prometheus:
+    endpoint: localhost:9464  # Prometheus scrape endpoint
+
+processors:
+  batch: {}
+
+service:
+  pipelines:
+    traces:
+      receivers: [otlp]
+      processors: [batch]
+      exporters: [otlp/tempo]
+
+    metrics:
+      receivers: [otlp]
+      processors: [batch]
+      exporters: [prometheus]

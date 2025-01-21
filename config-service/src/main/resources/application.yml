@@ -1,0 +1,19 @@
+spring:
+  application:
+    name: configservice
+  cloud:
+    config:
+      server:
+        git:
+          uri: ${CONFIG_GIT_URL}
+          skip-ssl-validation: true
+          timeout: 30
+          username: ${CONFIG_GIT_USERNAME}
+          password: ${CONFIG_GIT_ACCESS_TOKEN}
+          clone-on-start: true
+          default-label: ${CONFIG_GIT_BRANCH:main}
+  profiles:
+    active: ${ACTIVE_PROFILE:local}
+
+server:
+  port: ${SERVER_PORT:8888}

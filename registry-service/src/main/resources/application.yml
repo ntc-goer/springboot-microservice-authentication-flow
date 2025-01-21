@@ -1,0 +1,13 @@
+spring:
+  application:
+    name: registryservice
+
+server:
+  port: ${SERVER_PORT:8765}
+
+eureka:
+  client:
+    register-with-eureka: false
+    fetch-registry: false
+    service-url:
+      defaultZone: http://localhost:${server.port}/eureka/
