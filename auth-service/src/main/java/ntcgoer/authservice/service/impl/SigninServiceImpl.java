@@ -24,8 +24,6 @@ import java.util.HashMap;
 @Service
 @RequiredArgsConstructor
 public class SigninServiceImpl implements SigninService {
-    private static final Logger logger = LoggerFactory.getLogger(SigninServiceImpl.class);
-
     private final HashUtil hashUtil;
     private final StringUtil stringUtil;
     private final RedisUtil redisUtil;
@@ -38,41 +36,30 @@ public class SigninServiceImpl implements SigninService {
     @Override
     @Transactional
     public SigninResponseDto signin(SigninRequestDto requestDto) {
-        try {
-            var userAccountClientResp =
-                    this.feignSafeExecutor.Call(() -> this.userFeignClient
-                            .findAccountByEmailUsername(requestDto.getUserNameOrEmail()));
-            if (userAccountClientResp.hasNotFoundError()) {
-                throw new UnauthorizedException();
-            }
-            if (userAccountClientResp.hasError()) {
-                throw new InternalServerErrorException();
-            }
-            if (userAccountClientResp.getResponse().getData().getVerifiedAt() == null) {
-                throw new ForbiddenException("UNVERIFIED_ACCOUNT");
-            }
-
-            Boolean matched = this.hashUtil.matches(
-                    requestDto.getPassword(),
-                    userAccountClientResp.getResponse().getData().getPassword());
-            if (!matched) {
-                throw new UnauthorizedException();
-            }
-
-            String accessToken = this.stringUtil.generateRandomString();
-            this.handleStoreRedisSigninData(accessToken, userAccountClientResp.getResponse().getData());
-
-            return new SigninResponseDto(accessToken);
-        } catch (UnauthorizedException ex) {
-            logger.error(String.format("SigninServiceImpl.signin.UnauthorizedException: %s", ex.getMessage()));
-            throw ex;
-        } catch (ForbiddenException ex) {
-            logger.error(String.format("SigninServiceImpl.signin.ForbiddenException: %s", ex.getMessage()));
-            throw ex;
-        } catch (Exception ex) {
-            logger.error(String.format("SigninServiceImpl.signin.Exception: %s", ex.getMessage()));
-            throw new InternalServerErrorException(ex.getMessage());
+        var userAccountClientResp =
+                this.feignSafeExecutor.Call(() -> this.userFeignClient
+                        .findAccountByEmailUsername(requestDto.getUserNameOrEmail()));
+        if (userAccountClientResp.hasNotFoundError()) {
+            throw new UnauthorizedException();
         }
+        if (userAccountClientResp.hasError()) {
+            throw new InternalServerErrorException();
+        }
+        if (userAccountClientResp.getResponse().getData().getVerifiedAt() == null) {
+            throw new ForbiddenException("UNVERIFIED_ACCOUNT");
+        }
+
+        Boolean matched = this.hashUtil.matches(
+                requestDto.getPassword(),
+                userAccountClientResp.getResponse().getData().getPassword());
+        if (!matched) {
+            throw new UnauthorizedException();
+        }
+
+        String accessToken = this.stringUtil.generateRandomString();
+        this.handleStoreRedisSigninData(accessToken, userAccountClientResp.getResponse().getData());
+
+        return new SigninResponseDto(accessToken);
     }
 
     private void handleStoreRedisSigninData(String accessToken, UserAccountClientResponse resp) {

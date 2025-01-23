@@ -24,87 +24,52 @@ import java.time.LocalDateTime;
 @RequiredArgsConstructor
 @Service
 public class UserAccountServiceImpl implements UserAccountService {
-    private static final Logger logger = LoggerFactory.getLogger(UserAccountServiceImpl.class);
-
     private final ModelMapper modelMapper;
     private final UserAccountRepository userAccountRepository;
 
     @Override
     public VerifySignupDataResponseDto verifySignupData(VerifySignupDataRequestDto verifySignupDataRequestDto) {
-        try {
-            Boolean userNameExists = this.userAccountRepository.existsByUserName(verifySignupDataRequestDto.getUserName());
-            Boolean emailExists = this.userAccountRepository.existsByEmail(verifySignupDataRequestDto.getEmail());
-            return new VerifySignupDataResponseDto(userNameExists, emailExists);
-        } catch (Exception e) {
-            throw new InternalServerErrorException();
-        }
+        Boolean userNameExists = this.userAccountRepository.existsByUserName(verifySignupDataRequestDto.getUserName());
+        Boolean emailExists = this.userAccountRepository.existsByEmail(verifySignupDataRequestDto.getEmail());
+        return new VerifySignupDataResponseDto(userNameExists, emailExists);
     }
 
     @Override
     @Transactional
     public CreateUserAccountResponseDto createUserAccount(CreateAccountRequestDto createAccountRequestDto) {
-        try {
-            UserAccountEntity userAccountEntity = this.modelMapper.map(createAccountRequestDto, UserAccountEntity.class);
-            this.userAccountRepository.save(userAccountEntity);
-            CreateUserAccountResponseDto createUserAccountResponseDto = this.modelMapper.map(userAccountEntity, CreateUserAccountResponseDto.class);
-            createUserAccountResponseDto.setIsVerified(false);
-            return createUserAccountResponseDto;
-        } catch (Exception e) {
-            logger.error(String.format("UserAccountServiceImpl.CreateUserAccountResponseDto.Exception: %s", e.getMessage()));
-            throw new InternalServerErrorException();
-        }
+        UserAccountEntity userAccountEntity = this.modelMapper.map(createAccountRequestDto, UserAccountEntity.class);
+        this.userAccountRepository.save(userAccountEntity);
+        CreateUserAccountResponseDto createUserAccountResponseDto = this.modelMapper.map(userAccountEntity, CreateUserAccountResponseDto.class);
+        createUserAccountResponseDto.setIsVerified(false);
+        return createUserAccountResponseDto;
     }
 
     @Override
     public void updateAccountVerifiedAt(UpdateAccountVerifiedAtRequestDto updateAccountVerifiedAtRequestDto) {
-        try {
-            UserAccountEntity userAccountEntity = this.userAccountRepository
-                    .findById(updateAccountVerifiedAtRequestDto.getAccountId()).orElseThrow(
-                            ResourceNotFoundException::new
-                    );
-            userAccountEntity.setVerifiedAt(LocalDateTime.now());
-            this.userAccountRepository.save(userAccountEntity);
-        } catch (ResourceNotFoundException ex) {
-            logger.error("UserAccountServiceImpl.UpdateAccountVerifiedAtRequestDto.ResourceNotFoundException:", ex);
-            throw ex;
-        } catch (Exception ex) {
-            logger.error("UserAccountServiceImpl.UpdateAccountVerifiedAtRequestDto.Exception: ", ex);
-            throw new InternalServerErrorException();
-        }
+        UserAccountEntity userAccountEntity = this.userAccountRepository
+                .findById(updateAccountVerifiedAtRequestDto.getAccountId()).orElseThrow(
+                        ResourceNotFoundException::new
+                );
+        userAccountEntity.setVerifiedAt(LocalDateTime.now());
+        this.userAccountRepository.save(userAccountEntity);
     }
 
     @Override
     public UserAccountResponseDto findById(String id) {
-        try {
-            UserAccountEntity userAccountEntity = this.userAccountRepository
-                    .findById(id)
-                    .orElseThrow(ResourceNotFoundException::new);
-            this.userAccountRepository.save(userAccountEntity);
-            return this.modelMapper.map(userAccountEntity, UserAccountResponseDto.class);
-        } catch (ResourceNotFoundException ex) {
-            logger.error("UserAccountServiceImpl.GetUserAccountResponseDto.ResourceNotFoundException: ", ex);
-            throw ex;
-        } catch (Exception ex) {
-            logger.error("UserAccountServiceImpl.GetUserAccountResponseDto.Exception: ", ex);
-            throw new InternalServerErrorException(ex.getMessage());
-        }
+        UserAccountEntity userAccountEntity = this.userAccountRepository
+                .findById(id)
+                .orElseThrow(ResourceNotFoundException::new);
+        this.userAccountRepository.save(userAccountEntity);
+        return this.modelMapper.map(userAccountEntity, UserAccountResponseDto.class);
     }
 
     @Override
     public UserAccountWithPasswordResponseDto findAccountByEmailUsername(String emailUserName) {
-        try {
-            UserAccountEntity userAccountEntity = this.userAccountRepository
-                    .findByEmailUserName(emailUserName);
-            if (userAccountEntity == null) {
-                throw new ResourceNotFoundException();
-            }
-            return this.modelMapper.map(userAccountEntity, UserAccountWithPasswordResponseDto.class);
-        } catch (ResourceNotFoundException ex) {
-            logger.error("UserAccountServiceImpl.GetUserAccountResponseDto.ResourceNotFoundException: ", ex);
-            throw ex;
-        } catch (Exception ex) {
-            logger.error("UserAccountServiceImpl.GetUserAccountResponseDto.Exception: ", ex);
-            throw new InternalServerErrorException(ex.getMessage());
+        UserAccountEntity userAccountEntity = this.userAccountRepository
+                .findByEmailUserName(emailUserName);
+        if (userAccountEntity == null) {
+            throw new ResourceNotFoundException();
         }
+        return this.modelMapper.map(userAccountEntity, UserAccountWithPasswordResponseDto.class);
     }
 }

@@ -1,5 +1,6 @@
 package ntcgoer.authservice.publisher;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.AllArgsConstructor;
 import ntcgoer.authservice.client.queueclient.QueueClient;
@@ -28,8 +29,7 @@ public class EmailTemplatePublisher {
     private final TemplateEmailQueueConfiguration templateEmailQueueConfiguration;
 
     @Scheduled(fixedRateString = "${np-schedule.email-template-outbox.fixed-rate}")
-    public void publish()  {
-        try {
+    public void publish() throws JsonProcessingException {
             List<OutboxMessageEntity> outboxMessageEntityList = outboxMessageRepository.findAllByMessageTypeAndStatusOrderByCreatedAtAsc(
                     OutboxMessageType.EMAIL_TEMPLATE,
                     OutboxMessageStatus.PENDING
@@ -59,8 +59,5 @@ public class EmailTemplatePublisher {
                 outboxMessageEntity.setStatus(OutboxMessageStatus.PROCESSED);
                 outboxMessageRepository.save(outboxMessageEntity);
             }
-        } catch (Exception ex){
-            logger.error(ex.getMessage());
-        }
     }
 }
